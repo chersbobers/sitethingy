@@ -34,6 +34,8 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            /* Neon / modern UI polish */
+            box-shadow: 0 6px 24px rgba(0,255,0,0.03);
         }
         
         .header-content {
@@ -49,6 +51,7 @@
             font-weight: bold;
             color: #00ff00;
             cursor: pointer;
+            text-shadow: 0 0 8px rgba(0,255,0,0.08);
         }
         
         .nav {
@@ -103,6 +106,9 @@
             border: 1px solid #333;
             border-radius: 5px;
             min-height: 600px;
+            /* Neon / modern UI polish */
+            background: linear-gradient(180deg,#0b0b0b,#090909);
+            border: 1px solid rgba(0,255,0,0.06);
         }
         
         .feed-header {
@@ -198,6 +204,12 @@
         .post {
             padding: 15px 20px;
             border-bottom: 1px solid #333;
+            transition: transform 0.12s, box-shadow 0.12s;
+        }
+        
+        .post:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,255,0,0.03);
         }
         
         .post:last-child {
@@ -501,6 +513,18 @@
             display: none;
         }
         
+        /* Neon / modern UI polish */
+        .header { box-shadow: 0 6px 24px rgba(0,255,0,0.03); }
+        .logo { text-shadow: 0 0 8px rgba(0,255,0,0.08); }
+        .main-content { background: linear-gradient(180deg,#0b0b0b,#090909); border: 1px solid rgba(0,255,0,0.06); }
+        .post { transition: transform 0.12s, box-shadow 0.12s; }
+        .post:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,255,0,0.03); }
+        .owner-badge { display:inline-block; background: linear-gradient(90deg,#ffd166,#ef476f); color:#000; padding:2px 6px; margin-left:6px; font-size:11px; font-weight:bold; border-radius:3px; vertical-align:middle; }
+        /* Profile followers list */
+        #profile-followers-list { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px; }
+        .follower-pill { background:#0f0f0f; border:1px solid rgba(255,255,255,0.03); padding:6px 10px; border-radius:999px; color:#ccc; cursor:pointer; font-size:13px; display:inline-flex; align-items:center; gap:8px; }
+        .follower-pill:hover { background:#081; color:#000; border-color:rgba(0,255,0,0.12); transform:translateY(-2px); }
+
         @media (max-width: 768px) {
             .grid-container {
                 grid-template-columns: 1fr;
@@ -612,6 +636,10 @@
                             <div class="profile-stat-number" id="profile-followers">0</div>
                             <div class="profile-stat-label">Followers</div>
                         </div>
+                    </div>
+                    <div id="profile-followers-list"><!-- follower pills --></div>
+                    <div style="margin-top:12px;">
+                        <button class="btn" id="profile-action-btn" style="display:inline-block;">...</button>
                     </div>
                     <button class="btn" onclick="showPage('settings')">Edit Profile</button>
                 </div>
@@ -783,6 +811,7 @@
     <script>
         // Global state
         let currentUser = null;
+        let viewedUser = null; // user whose profile page is being viewed (object)
         let currentFeed = 'home';
         let posts = [];
         let users = [];
@@ -899,7 +928,17 @@
             if (savedUser) {
                 currentUser = savedUser;
                 showLoggedInState();
-                showPage('home');
+                // if location is /@username then show that profile, else go home
+                const m = window.location.pathname.match(/^\/@([\w-]+)/);
+                if (m) {
+                    const uname = m[1];
+                    const u = users.find(x => x.username === uname);
+                    if (u) { viewedUser = u; showPage('profile'); updateNavigation('profile'); } else { showPage('home'); updateNavigation('home'); }
+                } else {
+                    showPage('home');
+                    updateNavigation('home');
+                }
+                showNotification('Welcome back, ' + (savedUser.name || savedUser.username) + '!');
             } else {
                 showLoggedOutState();
                 showPage('login');
@@ -1151,26 +1190,34 @@
 
         // Profile management
         function loadProfile() {
-            if (!currentUser) return;
+            // Choose whose profile to show: viewedUser (if set) else currentUser
+            const subject = viewedUser || currentUser;
+            if (!subject) return;
 
             const avatar = document.getElementById('profile-avatar');
             const nameEl = document.getElementById('profile-name');
             const handle = document.getElementById('profile-handle');
             const bio = document.getElementById('profile-bio');
 
-            if (avatar) avatar.textContent = (currentUser.name || '?').charAt(0).toUpperCase();
-            if (nameEl) nameEl.innerHTML = `${currentUser.name} ${currentUser.username === 'chersbobers' ? '<span class="owner-badge">OWNER</span>' : ''}`;
-            if (handle) handle.textContent = '@' + currentUser.username;
-            if (bio) bio.textContent = currentUser.bio || 'Welcome to my profile!';
+            if (avatar) avatar.textContent = (subject.name || '?').charAt(0).toUpperCase();
+            if (nameEl) nameEl.innerHTML = `${subject.name} ${subject.username === 'chersbobers' ? '<span class="owner-badge">OWNER</span>' : ''}`;
+            if (handle) handle.textContent = '@' + subject.username;
+            if (bio) bio.textContent = subject.bio || 'Welcome to this profile!';
 
-            const userPosts = posts.filter(p => p.username === currentUser.username);
+            const userPosts = posts.filter(p => p.username === subject.username);
             const postsCount = document.getElementById('profile-posts');
             const followingCount = document.getElementById('profile-following');
             const followersCount = document.getElementById('profile-followers');
 
+            // compute follower count from follows object to keep consistent
+            const followerCount = Object.keys(follows).reduce((acc, followerUser) => {
+                const arr = follows[followerUser] || [];
+                return acc + (arr.includes(subject.username) ? 1 : 0);
+            }, 0);
+
             if (postsCount) postsCount.textContent = userPosts.length;
-            if (followingCount) followingCount.textContent = follows[currentUser.username] ? follows[currentUser.username].length : 0;
-            if (followersCount) followersCount.textContent = currentUser.followers || 0;
+            if (followingCount) followingCount.textContent = (follows[subject.username] || []).length;
+            if (followersCount) followersCount.textContent = followerCount;
 
             // Load user's posts
             const postsContainer = document.getElementById('profile-posts-list');
@@ -1178,12 +1225,133 @@
                 postsContainer.innerHTML = '';
                 userPosts.forEach(post => postsContainer.appendChild(createPostElement(post)));
             }
+
+            renderFollowersPills(subject.username);
+            renderProfileAction(subject.username);
         }
 
-        function showUserProfile(username) {
+        function showUserProfile(username, pushHistory = true) {
             const user = users.find(u => u.username === username);
-            if (!user) return;
-            showNotification(`Viewing ${user.name}'s profile - Feature coming soon!`);
+            if (!user) {
+                showNotification('User not found: @' + username);
+                return;
+            }
+            // push URL like /@username
+            if (pushHistory) {
+                const path = '/@' + username;
+                history.pushState({ profile: username }, '', path);
+            }
+            // set viewedUser and load profile UI
+            viewedUser = user;
+            showPage('profile'); // will call loadProfile (modified)
+        }
+
+        // Listen for back/forward navigation to support /@username deep links
+        window.addEventListener('popstate', (ev) => {
+            const path = window.location.pathname || '';
+            const m = path.match(/^\/@([\w-]+)/);
+            if (m) {
+                const uname = m[1];
+                const user = users.find(u => u.username === uname);
+                if (user) {
+                    viewedUser = user;
+                    showPage('profile');
+                    return;
+                }
+            }
+            // default: go home (or login if not authenticated)
+            if (currentUser) showPage('home'); else showPage('login');
+        });
+
+        // Update loadProfile to accept viewedUser OR currentUser
+        function loadProfile() {
+            // Choose whose profile to show: viewedUser (if set) else currentUser
+            const subject = viewedUser || currentUser;
+            if (!subject) return;
+
+            const avatar = document.getElementById('profile-avatar');
+            const nameEl = document.getElementById('profile-name');
+            const handle = document.getElementById('profile-handle');
+            const bio = document.getElementById('profile-bio');
+
+            if (avatar) avatar.textContent = (subject.name || '?').charAt(0).toUpperCase();
+            if (nameEl) nameEl.innerHTML = `${subject.name} ${subject.username === 'chersbobers' ? '<span class="owner-badge">OWNER</span>' : ''}`;
+            if (handle) handle.textContent = '@' + subject.username;
+            if (bio) bio.textContent = subject.bio || 'Welcome to this profile!';
+
+            const userPosts = posts.filter(p => p.username === subject.username);
+            const postsCount = document.getElementById('profile-posts');
+            const followingCount = document.getElementById('profile-following');
+            const followersCount = document.getElementById('profile-followers');
+
+            // compute follower count from follows object to keep consistent
+            const followerCount = Object.keys(follows).reduce((acc, followerUser) => {
+                const arr = follows[followerUser] || [];
+                return acc + (arr.includes(subject.username) ? 1 : 0);
+            }, 0);
+
+            if (postsCount) postsCount.textContent = userPosts.length;
+            if (followingCount) followingCount.textContent = (follows[subject.username] || []).length;
+            if (followersCount) followersCount.textContent = followerCount;
+
+            // Load user's posts
+            const postsContainer = document.getElementById('profile-posts-list');
+            if (postsContainer) {
+                postsContainer.innerHTML = '';
+                userPosts.forEach(post => postsContainer.appendChild(createPostElement(post)));
+            }
+
+            renderFollowersPills(subject.username);
+            renderProfileAction(subject.username);
+        }
+
+        // Render follower "pills" in profile
+        function renderFollowersPills(username) {
+            const container = document.getElementById('profile-followers-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            // find users who follow "username"
+            const followersArr = Object.keys(follows).filter(u => (follows[u] || []).includes(username));
+            // show up to 12 follower pills
+            followersArr.slice(0, 12).forEach(u => {
+                const userObj = users.find(x => x.username === u) || { username: u, name: u };
+                const pill = document.createElement('div');
+                pill.className = 'follower-pill';
+                pill.innerHTML = `<strong>${userObj.name}</strong> <span style="opacity:.6">@${userObj.username}</span>`;
+                pill.onclick = () => showUserProfile(userObj.username);
+                container.appendChild(pill);
+            });
+            if (followersArr.length === 0) {
+                container.innerHTML = '<div style="color:#666; font-size:13px;">No followers yet</div>';
+            }
+        }
+
+        // Render Follow/Unfollow or Edit button on profile
+        function renderProfileAction(subjectUsername) {
+            const btn = document.getElementById('profile-action-btn');
+            if (!btn) return;
+            // If viewing your own profile
+            if (currentUser && currentUser.username === subjectUsername) {
+                btn.textContent = 'Edit Profile';
+                btn.onclick = () => showPage('settings');
+                return;
+            }
+            // If not logged in, show "Login to follow"
+            if (!currentUser) {
+                btn.textContent = 'Login to Follow';
+                btn.onclick = () => showPage('login');
+                return;
+            }
+            // Show follow/unfollow based on follows data
+            const following = follows[currentUser.username] || [];
+            const isFollowing = following.includes(subjectUsername);
+            btn.textContent = isFollowing ? 'Unfollow' : 'Follow';
+            btn.onclick = () => {
+                toggleFollow(subjectUsername);
+                // re-render action button state
+                setTimeout(() => renderProfileAction(subjectUsername), 120);
+            };
         }
 
         // Discover page
@@ -1233,13 +1401,12 @@
                 return;
             }
 
-            if (!follows[currentUser.username]) {
-                follows[currentUser.username] = [];
-            }
+            if (!follows[currentUser.username]) follows[currentUser.username] = [];
 
             const following = follows[currentUser.username];
             const isFollowing = following.includes(username);
 
+            // update follows map
             if (isFollowing) {
                 follows[currentUser.username] = following.filter(u => u !== username);
                 showNotification(`Unfollowed @${username}`);
@@ -1248,7 +1415,18 @@
                 showNotification(`Now following @${username}`);
             }
 
+            // Update follower count on target user object (for display convenience)
+            const target = users.find(u => u.username === username);
+            if (target) {
+                // compute follower count from follows map to keep accurate
+                target.followers = Object.keys(follows).reduce((acc, fuser) => {
+                    const arr = follows[fuser] || [];
+                    return acc + (arr.includes(username) ? 1 : 0);
+                }, 0);
+            }
+
             saveFollows();
+            saveUsers();
 
             const button = document.getElementById(`follow-${username}`);
             if (button) button.textContent = isFollowing ? 'Follow' : 'Unfollow';
@@ -1310,93 +1488,132 @@
 
                 const userIndex = users.findIndex(u => u.username === currentUser.username);
                 if (userIndex !== -1) {
-                    users[userIndex] = {...currentUser};
-                } else {
-                    users.push({...currentUser});
+                    users[userIndex] = { ...users[userIndex], name, bio };
+                    saveUsers();
                 }
 
-                saveUsers();
-                localStorage.setItem(STORAGE_KEYS.CURRENT, JSON.stringify(currentUser));
-                showNotification('Profile updated!');
-                if (document.getElementById('profile-page').classList.contains('active')) loadProfile();
+                showNotification('Profile updated successfully!');
+                loadProfile();
+            } else {
+                showNotification('Name is required.', 'error');
             }
         }
 
-        function toggleSwitch(element) {
-            element.classList.toggle('on');
-        }
-
-        // Utility functions
-        function showNotification(message) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.style.display = 'block';
-            
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-        }
-        
         // Authentication handlers
         function handleLogin(event) {
             event.preventDefault();
+
             const username = document.getElementById('login-username').value.trim();
-            const password = document.getElementById('login-password').value;
-            const user = users.find(u => u.username === username);
-            if (user) {
-                currentUser = user;
-                localStorage.setItem(STORAGE_KEYS.CURRENT, JSON.stringify(currentUser));
-                showLoggedInState();
-                loadUserSuggestions();
+            const password = document.getElementById('login-password').value.trim();
+
+            if (!username || !password) {
+                showNotification('Please enter both username and password.', 'error');
+                return;
+            }
+
+            // Allow login for demo accounts that don't have a password field (legacy/sample users)
+            const user = users.find(u => u.username === username && (u.password ? u.password === password : true));
+            if (!user) {
+                showNotification('Invalid username or password.', 'error');
+                return;
+            }
+
+            currentUser = user;
+            localStorage.setItem(STORAGE_KEYS.CURRENT, JSON.stringify(currentUser));
+
+            // ensure current user's follow list exists
+            if (!follows[currentUser.username]) follows[currentUser.username] = [];
+            // ensure bot exists and is not already followed by this user
+            loadBotSetting();
+            ensureBotExists(botUsername);
+            if (!follows[currentUser.username].includes(botUsername)) {
+                follows[currentUser.username].push(botUsername);
+                // update bot follower count
+                const bot = users.find(u => u.username === botUsername);
+                if (bot) bot.followers = Object.keys(follows).reduce((acc, fuser) => {
+                    const arr = follows[fuser] || [];
+                    return acc + (arr.includes(botUsername) ? 1 : 0);
+                }, 0);
+            }
+
+            saveFollows();
+            saveUsers();
+
+            showLoggedInState();
+            loadUserSuggestions();
+
+            // if location is /@username then show that profile, else go home
+            const m = window.location.pathname.match(/^\/@([\w-]+)/);
+            if (m) {
+                const uname = m[1];
+                const u = users.find(x => x.username === uname);
+                if (u) { viewedUser = u; showPage('profile'); updateNavigation('profile'); } else { showPage('home'); updateNavigation('home'); }
+            } else {
                 showPage('home');
                 updateNavigation('home');
-                showNotification('Welcome back, ' + (user.name || user.username) + '!');
-            } else {
-                showNotification('User not found. Try registering first.');
             }
+
+            showNotification('Welcome back, ' + (user.name || user.username) + '!');
         }
 
         function handleRegister(event) {
             event.preventDefault();
+
             const username = document.getElementById('reg-username').value.trim();
             const email = document.getElementById('reg-email').value.trim();
-            const password = document.getElementById('reg-password').value;
+            const password = document.getElementById('reg-password').value.trim();
             const name = document.getElementById('reg-name').value.trim();
 
             if (!username || !email || !password || !name) {
-                showNotification('Please complete all fields.');
-                return;
-            }
-            if (users.find(u => u.username === username)) {
-                showNotification('Username already taken!');
+                showNotification('All fields are required.', 'error');
                 return;
             }
 
+            // Check if username or email is already taken
+            const existingUser = users.find(u => u.username === username || u.email === email);
+            if (existingUser) {
+                showNotification('Username or email already taken.', 'error');
+                return;
+            }
+
+            // Create new user
             const newUser = {
                 username,
                 email,
+                password, // demo only: store plaintext (NOT for production)
                 name,
-                bio: 'New user on SocialNet!',
+                bio: '',
                 followers: 0,
                 following: 0
             };
+
             users.push(newUser);
             saveUsers();
 
+            // Auto-login new user
             currentUser = newUser;
             localStorage.setItem(STORAGE_KEYS.CURRENT, JSON.stringify(currentUser));
+
+            // Ensure follow lists and auto-follow bot + defaults
             if (!follows[currentUser.username]) follows[currentUser.username] = [];
             // default follow suggestions
             ['alice_dev','bob_designer'].forEach(u => {
                 if (!follows[currentUser.username].includes(u)) follows[currentUser.username].push(u);
             });
-            // ensure bot is followed by new user
+            // ensure bot exists and follow it
             loadBotSetting();
             ensureBotExists(botUsername);
             if (!follows[currentUser.username].includes(botUsername)) follows[currentUser.username].push(botUsername);
-            // increment bot follower count
+
+            // update bot follower count
             const bot = users.find(u => u.username === botUsername);
-            if (bot) bot.followers = (bot.followers || 0) + 1;
+            if (bot) {
+                bot.followers = Object.keys(follows).reduce((acc, fuser) => {
+                    const arr = follows[fuser] || [];
+                    return acc + (arr.includes(botUsername) ? 1 : 0);
+                }, 0);
+            }
+
             saveFollows();
             saveUsers();
 
@@ -1413,14 +1630,40 @@
             document.getElementById('reg-name').value = '';
         }
 
-        function logout() {
-            currentUser = null;
-            localStorage.removeItem(STORAGE_KEYS.CURRENT);
-            showLoggedOutState();
-            showPage('login');
-            updateNavigation('login');
+        // Notification helper
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            if (!notification) return;
+
+            notification.textContent = message;
+            notification.style.display = 'block';
+
+            // Set color based on type
+            switch (type) {
+                case 'success':
+                    notification.style.backgroundColor = '#00ff00';
+                    notification.style.color = '#000';
+                    break;
+                case 'error':
+                    notification.style.backgroundColor = '#ff4444';
+                    notification.style.color = '#fff';
+                    break;
+                default:
+                    notification.style.backgroundColor = '#007bff';
+                    notification.style.color = '#fff';
+            }
+
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
         }
-        
+
+        // Toggle switch helper
+        function toggleSwitch(element) {
+            element.classList.toggle('on');
+        }
+
         // Initialize app when page loads
         document.addEventListener('DOMContentLoaded', function() {
             init();
@@ -1429,17 +1672,18 @@
             if (currentUser) {
                 loadUserSuggestions();
             }
-        });
-        
-        // Handle keyboard shortcuts
-        document.addEventListener('keydown', function(event) {
-            // Ctrl/Cmd + Enter to post
-            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-                const textarea = document.getElementById('post-textarea');
-                if (textarea && document.activeElement === textarea) {
-                    createPost();
-                }
-            }
++
++            // Support direct /@username deep links on first load
++            const path = window.location.pathname || '';
++            const m = path.match(/^\/@([\w-]+)/);
++            if (m) {
++                const uname = m[1];
++                const u = users.find(x => x.username === uname);
++                if (u) {
++                    viewedUser = u;
++                    showPage('profile');
++                }
++            }
         });
     </script>
 </body>
