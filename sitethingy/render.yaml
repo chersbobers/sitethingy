@@ -1,0 +1,11 @@
+version: 1
+services:
+  - type: web
+    name: sitethingy
+    env: static
+    staticPublishPath: public
+    routes:
+      - src: /(.*)
+        dest: /$1
+    buildCommand: npm install
+    startCommand: npm start

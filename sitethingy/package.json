@@ -1,0 +1,21 @@
+{
+  "name": "sitethingy",
+  "version": "1.0.0",
+  "description": "A social platform application",
+  "main": "public/index.html",
+  "scripts": {
+    "start": "serve public",
+    "build": "echo 'Build step not defined'"
+  },
+  "dependencies": {
+    "serve": "^14.0.1"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "social",
+    "platform",
+    "web"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
