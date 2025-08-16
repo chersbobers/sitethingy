@@ -751,6 +751,16 @@
                         <h3>Account</h3>
                         <button class="btn" onclick="logout()" style="background-color: #ff4444; border-color: #ff4444;">Logout</button>
                     </div>
+                    
+                    <div class="settings-section">
+                        <h3>Auto-follow Bot</h3>
+                        <div class="form-group">
+                            <label>Bot username</label>
+                            <input type="text" id="settings-bot" class="form-input" placeholder="autobot">
+                        </div>
+                        <button class="btn" onclick="saveBotSetting()">Save Bot</button>
+                        <p style="color:#666; font-size:12px; margin-top:8px;">Every new account will follow this bot. The bot user will be auto-created if missing.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1421,7 +1431,7 @@
                 // compute follower count from follows map to keep accurate
                 target.followers = Object.keys(follows).reduce((acc, fuser) => {
                     const arr = follows[fuser] || [];
-                    return acc + (arr.includes(username) ? 1 : 0);
+                    return acc + (arr.includes(botUsername) ? 1 : 0);
                 }, 0);
             }
 
@@ -1630,6 +1640,17 @@
             document.getElementById('reg-name').value = '';
         }
 
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem(STORAGE_KEYS.CURRENT);
+            viewedUser = null;
+            // reset nav and show login
+            showLoggedOutState();
+            showPage('login');
+            updateNavigation('login');
+            showNotification('Logged out', 'success');
+        }
+        
         // Notification helper
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
@@ -1672,18 +1693,18 @@
             if (currentUser) {
                 loadUserSuggestions();
             }
-+
-+            // Support direct /@username deep links on first load
-+            const path = window.location.pathname || '';
-+            const m = path.match(/^\/@([\w-]+)/);
-+            if (m) {
-+                const uname = m[1];
-+                const u = users.find(x => x.username === uname);
-+                if (u) {
-+                    viewedUser = u;
-+                    showPage('profile');
-+                }
-+            }
+
+            // Support direct /@username deep links on first load
+            const path = window.location.pathname || '';
+            const m = path.match(/^\/@([\w-]+)/);
+            if (m) {
+                const uname = m[1];
+                const u = users.find(x => x.username === uname);
+                if (u) {
+                    viewedUser = u;
+                    showPage('profile');
+                }
+            }
         });
     </script>
 </body>
