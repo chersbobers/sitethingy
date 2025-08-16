@@ -1295,6 +1295,82 @@
             }, 3000);
         }
         
+        // Authentication handlers
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            const user = users.find(u => u.username === username);
+            if (user) {
+                currentUser = user;
+                localStorage.setItem(STORAGE_KEYS.CURRENT, JSON.stringify(currentUser));
+                showLoggedInState();
+                loadUserSuggestions();
+                showPage('home');
+                showNotification('Welcome back, ' + (user.name || user.username) + '!');
+            } else {
+                showNotification('User not found. Try registering first.');
+            }
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            const username = document.getElementById('reg-username').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const name = document.getElementById('reg-name').value.trim();
+
+            if (!username || !email || !password || !name) {
+                showNotification('Please complete all fields.');
+                return;
+            }
+            if (users.find(u => u.username === username)) {
+                showNotification('Username already taken!');
+                return;
+            }
+
+            const newUser = {
+                username,
+                email,
+                name,
+                bio: 'New user on SocialNet!',
+                followers: 0,
+                following: 0
+            };
+            users.push(newUser);
+            saveUsers();
+
+            currentUser = newUser;
+            localStorage.setItem(STORAGE_KEYS.CURRENT, JSON.stringify(currentUser));
+            if (!follows[currentUser.username]) follows[currentUser.username] = [];
+            ['alice_dev','bob_designer'].forEach(u => {
+                if (!follows[currentUser.username].includes(u)) follows[currentUser.username].push(u);
+            });
+            saveFollows();
+
+            showLoggedInState();
+            loadUserSuggestions();
+            showPage('home');
+            showNotification('Welcome to SocialNet, ' + name + '!');
+
+            // clear form
+            document.getElementById('reg-username').value = '';
+            document.getElementById('reg-email').value = '';
+            document.getElementById('reg-password').value = '';
+            document.getElementById('reg-name').value = '';
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem(STORAGE_KEYS.CURRENT);
+            const nav = document.getElementById('main-nav');
+            if (nav) {
+                nav.innerHTML = '<a class="nav-link" onclick="showPage(\\'login\\')">Login</a> <a class="nav-link" onclick="showPage(\\'register\\')">Register</a>';
+            }
+            showPage('login');
+            updateNavigation('login');
+        }
+        
         // Initialize app when page loads
         document.addEventListener('DOMContentLoaded', function() {
             init();
