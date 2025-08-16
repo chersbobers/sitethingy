@@ -792,9 +792,10 @@
             USERS: 'sn_users',
             POSTS: 'sn_posts',
             FOLLOWS: 'sn_follows',
-            CURRENT: 'currentUser'
+            CURRENT: 'currentUser',
+            BOT: 'sn_bot'
         };
-
+        
         // Sample data (used only if no storage present)
         const sampleUsers = [
             { username: 'alice_dev', email: 'alice@example.com', name: 'Alice Developer', bio: 'Full-stack developer who loves coffee and code', followers: 245, following: 89 },
@@ -802,7 +803,9 @@
             { username: 'charlie_writer', email: 'charlie@example.com', name: 'Charlie Writer', bio: 'Tech writer and blogger', followers: 89, following: 67 },
             { username: 'diana_data', email: 'diana@example.com', name: 'Diana Data', bio: 'Data scientist exploring insights', followers: 203, following: 98 },
             // You can add the owner account here if desired:
-            { username: 'chersbobers', email: 'owner@example.com', name: 'Chersbobers', bio: 'Site owner', followers: 999, following: 0 }
+            { username: 'chersbobers', email: 'owner@example.com', name: 'Chersbobers', bio: 'Site owner', followers: 999, following: 0 },
+            // Default auto-follow bot (created if missing)
+            { username: 'autobot', email: 'bot@example.com', name: 'AutoBot', bio: 'Auto-follow bot', followers: 0, following: 0 }
         ];
 
         const samplePosts = [
@@ -858,10 +861,39 @@
             // Ensure timestamps are Date objects (or ISO strings converted when used)
             posts = posts.map(post => ({ ...post, timestamp: typeof post.timestamp === 'string' ? new Date(post.timestamp) : new Date(post.timestamp) }));
         }
+        
+        // Bot config helpers
+        let botUsername = 'autobot';
+        function loadBotSetting() {
+            const b = localStorage.getItem(STORAGE_KEYS.BOT);
+            botUsername = b || 'autobot';
+        }
+        function saveBotSetting() {
+            const input = document.getElementById('settings-bot');
+            if (!input) return;
+            const newBot = input.value.trim() || 'autobot';
+            botUsername = newBot;
+            localStorage.setItem(STORAGE_KEYS.BOT, botUsername);
+            ensureBotExists(botUsername);
+            showNotification('Auto-follow bot set to @' + botUsername);
+        }
+        function ensureBotExists(username) {
+            if (!username) return;
+            let bot = users.find(u => u.username === username);
+            if (!bot) {
+                bot = { username, email: username + '@example.com', name: username, bio: 'Auto-created bot account', followers: 0, following: 0 };
+                users.push(bot);
+                saveUsers();
+            }
+            // ensure bot has a followers number
+            if (typeof bot.followers !== 'number') bot.followers = 0;
+        }
 
         // Initialize app
         function init() {
             loadFromStorage();
+            loadBotSetting();
+            ensureBotExists(botUsername);
 
             const savedUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT) || 'null');
             if (savedUser) {
@@ -900,12 +932,13 @@
         }
         
         function updateNavigation(activePage) {
-            document.querySelectorAll('.nav-link').forEach(link => {
+            // Only update header nav (don't clear sidebar feed buttons)
+            document.querySelectorAll('#main-nav .nav-link').forEach(link => {
                 link.classList.remove('active');
             });
 
-            // match by data-page attribute
-            const active = document.querySelector(`.nav-link[data-page="${activePage}"]`);
+            // match by data-page attribute in header
+            const active = document.querySelector(`#main-nav .nav-link[data-page="${activePage}"]`);
             if (active) active.classList.add('active');
         }
 
@@ -1353,10 +1386,19 @@
             currentUser = newUser;
             localStorage.setItem(STORAGE_KEYS.CURRENT, JSON.stringify(currentUser));
             if (!follows[currentUser.username]) follows[currentUser.username] = [];
+            // default follow suggestions
             ['alice_dev','bob_designer'].forEach(u => {
                 if (!follows[currentUser.username].includes(u)) follows[currentUser.username].push(u);
             });
+            // ensure bot is followed by new user
+            loadBotSetting();
+            ensureBotExists(botUsername);
+            if (!follows[currentUser.username].includes(botUsername)) follows[currentUser.username].push(botUsername);
+            // increment bot follower count
+            const bot = users.find(u => u.username === botUsername);
+            if (bot) bot.followers = (bot.followers || 0) + 1;
             saveFollows();
+            saveUsers();
 
             showLoggedInState();
             loadUserSuggestions();
