@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000;
+            color: #ccc;
+            min-height: 100vh;
+            line-height: 1.4;
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        .header {
+            background-color: #111;
+            border-bottom: 1px solid #333;
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ff00;
+            cursor: pointer;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .nav-link {
+            color: #ccc;
+            text-decoration: none;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background-color: #222;
+            color: #00ff00;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            gap: 20px;
+        }
+        
+        .sidebar {
+            background-color: #111;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 15px;
+            height: fit-content;
+            position: sticky;
+            top: 80px;
+        }
+        
+        .sidebar h3 {
+            color: #00ffff;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .main-content {
+            background-color: #111;
+            border: 1px solid #333;
+            border-radius: 5px;
+            min-height: 600px;
+        }
+        
+        .feed-header {
+            background-color: #222;
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .feed-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #00ff00;
+        }
+        
+        .feed-subtitle {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .post-composer {
+            padding: 20px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .composer-textarea {
+            width: 100%;
+            background-color: #000;
+            color: #ccc;
+            border: 1px solid #333;
+            border-radius: 3px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .composer-textarea:focus {
+            outline: none;
+            border-color: #00ff00;
+        }
+        
+        .composer-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .char-count {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .btn {
+            background-color: #333;
+            color: #00ff00;
+            border: 1px solid #555;
+            padding: 8px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background-color: #444;
+        }
+        
+        .btn:disabled {
+            background-color: #222;
+            color: #666;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background-color: #00ff00;
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            background-color: #00cc00;
+        }
+        
+        .posts-list {
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+        }
+        
+        .post {
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .post:last-child {
+            border-bottom: none;
+        }
+        
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .username {
+            color: #00ffff;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .handle {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .timestamp {
+            color: #666;
+            font-size: 12px;
+            margin-left: auto;
+        }
+        
+        .post-content {
+            color: #ccc;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+        
+        .youtube-link {
+            color: #ff4444;
+            text-decoration: none;
+            background-color: #220000;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .youtube-link:hover {
+            background-color: #330000;
+            text-decoration: underline;
+        }
+        
+        .post-actions {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .post-action {
+            cursor: pointer;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        
+        .post-action:hover {
+            background-color: #222;
+            color: #ccc;
+        }
+        
+        .post-action.liked {
+            color: #ff4444;
+        }
+        
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background-color: #111;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 40px;
+        }
+        
+        .auth-title {
+            color: #00ff00;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #ccc;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .form-input {
+            width: 100%;
+            background-color: #000;
+            color: #ccc;
+            border: 1px solid #333;
+            padding: 12px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #00ff00;
+        }
+        
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+        
+        .auth-switch a {
+            color: #00ff00;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+        
+        .profile-header {
+            background: linear-gradient(135deg, #111, #222);
+            padding: 40px 20px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+        
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background-color: #00ff00;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: #000;
+        }
+        
+        .profile-name {
+            font-size: 24px;
+            color: #00ff00;
+            margin-bottom: 5px;
+        }
+        
+        .profile-handle {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .profile-bio {
+            color: #ccc;
+            max-width: 400px;
+            margin: 0 auto 20px;
+        }
+        
+        .profile-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .profile-stat {
+            text-align: center;
+        }
+        
+        .profile-stat-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ff00;
+        }
+        
+        .profile-stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .user-list {
+            list-style: none;
+        }
+        
+        .user-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .user-item:last-child {
+            border-bottom: none;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+        }
+        
+        .user-details h4 {
+            color: #00ffff;
+            margin-bottom: 3px;
+        }
+        
+        .user-details p {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .follow-btn {
+            padding: 6px 15px;
+            font-size: 12px;
+        }
+        
+        .settings-section {
+            background-color: #111;
+            border: 1px solid #333;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+        
+        .settings-section h3 {
+            color: #00ff00;
+            margin-bottom: 15px;
+        }
+        
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .settings-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .switch {
+            position: relative;
+            width: 50px;
+            height: 25px;
+            background-color: #333;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+        
+        .switch.on {
+            background-color: #00ff00;
+        }
+        
+        .switch::after {
+            content: '';
+            position: absolute;
+            width: 21px;
+            height: 21px;
+            background-color: #fff;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+        
+        .switch.on::after {
+            transform: translateX(25px);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #00ff00;
+            color: #000;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .sidebar {
+                position: static;
+                order: 2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo" onclick="showPage('home')">SocialNet</div>
+            <nav class="nav" id="main-nav">
+                <!-- Navigation will be populated by JavaScript -->
+            </nav>
+        </div>
+    </div>
+
+    <!-- Home Page -->
+    <div class="page active" id="home-page">
+        <div class="container">
+            <div class="grid-container">
+                <div class="sidebar">
+                    <h3>Navigation</h3>
+                    <div style="margin-bottom: 20px;">
+                        <div class="nav-link" onclick="showFeed('home')" id="home-feed-btn">🏠 Home</div>
+                        <div class="nav-link" onclick="showFeed('local')" id="local-feed-btn">🌍 Local</div>
+                        <div class="nav-link" onclick="showFeed('trending')" id="trending-feed-btn">📈 Trending</div>
+                    </div>
+                    
+                    <h3>Quick Actions</h3>
+                    <div>
+                        <div class="nav-link" onclick="showPage('profile')">👤 My Profile</div>
+                        <div class="nav-link" onclick="showPage('discover')">🔍 Discover</div>
+                        <div class="nav-link" onclick="showPage('messages')">💬 Messages</div>
+                    </div>
+                </div>
+                
+                <div class="main-content">
+                    <div class="feed-header">
+                        <div class="feed-title" id="current-feed-title">Home</div>
+                        <div class="feed-subtitle" id="current-feed-subtitle">Latest posts from people you follow</div>
+                    </div>
+                    
+                    <div class="post-composer" id="post-composer">
+                        <textarea class="composer-textarea" id="post-textarea" placeholder="What's happening?" maxlength="500" oninput="updateCharCount()"></textarea>
+                        <div class="composer-footer">
+                            <div class="char-count" id="char-count">0/500</div>
+                            <button class="btn btn-primary" onclick="createPost()" id="post-button">Post</button>
+                        </div>
+                    </div>
+                    
+                    <div class="posts-list" id="posts-list">
+                        <!-- Posts will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="sidebar">
+                    <h3>Trending</h3>
+                    <div id="trending-topics">
+                        <div class="user-item">
+                            <div>
+                                <div style="color: #00ff00; font-weight: bold;">#WebDev</div>
+                                <div style="color: #666; font-size: 12px;">1.2K posts</div>
+                            </div>
+                        </div>
+                        <div class="user-item">
+                            <div>
+                                <div style="color: #00ff00; font-weight: bold;">#OpenSource</div>
+                                <div style="color: #666; font-size: 12px;">890 posts</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin-top: 20px;">Suggestions</h3>
+                    <div id="user-suggestions">
+                        <!-- Suggestions will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Page -->
+    <div class="page" id="profile-page">
+        <div class="container">
+            <div class="main-content">
+                <div class="profile-header">
+                    <div class="profile-avatar" id="profile-avatar">?</div>
+                    <div class="profile-name" id="profile-name">Loading...</div>
+                    <div class="profile-handle" id="profile-handle">@loading</div>
+                    <div class="profile-bio" id="profile-bio">Welcome to my profile!</div>
+                    <div class="profile-stats">
+                        <div class="profile-stat">
+                            <div class="profile-stat-number" id="profile-posts">0</div>
+                            <div class="profile-stat-label">Posts</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-number" id="profile-following">0</div>
+                            <div class="profile-stat-label">Following</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-number" id="profile-followers">0</div>
+                            <div class="profile-stat-label">Followers</div>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="showPage('settings')">Edit Profile</button>
+                </div>
+                
+                <div class="posts-list" id="profile-posts-list">
+                    <!-- User's posts will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discover Page -->
+    <div class="page" id="discover-page">
+        <div class="container">
+            <div class="main-content">
+                <div class="feed-header">
+                    <div class="feed-title">Discover People</div>
+                    <div class="feed-subtitle">Find and follow interesting people</div>
+                </div>
+                
+                <div class="user-list" id="discover-users-list">
+                    <!-- Users will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages Page -->
+    <div class="page" id="messages-page">
+        <div class="container">
+            <div class="grid-container">
+                <div class="sidebar">
+                    <h3>Conversations</h3>
+                    <div id="conversations-list">
+                        <div class="user-item">
+                            <div class="user-info">
+                                <div class="user-avatar">A</div>
+                                <div class="user-details">
+                                    <h4>alice_dev</h4>
+                                    <p>Hey, saw your latest post...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="main-content">
+                    <div class="feed-header">
+                        <div class="feed-title">Messages</div>
+                        <div class="feed-subtitle">Direct messages - Feature coming soon!</div>
+                    </div>
+                    
+                    <div style="padding: 40px; text-align: center; color: #666;">
+                        <h3>Direct Messages</h3>
+                        <p>This feature is coming soon! You'll be able to send private messages to other users.</p>
+                    </div>
+                </div>
+                
+                <div class="sidebar">
+                    <h3>Message Info</h3>
+                    <p style="color: #666; font-size: 12px;">Select a conversation to view message details</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Page -->
+    <div class="page" id="settings-page">
+        <div class="container">
+            <div class="main-content">
+                <div class="feed-header">
+                    <div class="feed-title">Settings</div>
+                    <div class="feed-subtitle">Manage your account and preferences</div>
+                </div>
+                
+                <div style="padding: 20px;">
+                    <div class="settings-section">
+                        <h3>Profile Settings</h3>
+                        <div class="form-group">
+                            <label>Display Name</label>
+                            <input type="text" class="form-input" id="settings-name" placeholder="Your display name">
+                        </div>
+                        <div class="form-group">
+                            <label>Bio</label>
+                            <textarea class="form-input" id="settings-bio" placeholder="Tell us about yourself..." style="min-height: 80px; resize: vertical;"></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Privacy & Notifications</h3>
+                        <div class="settings-row">
+                            <div>
+                                <strong>Private Account</strong>
+                                <p style="color: #666; font-size: 12px;">Require approval for new followers</p>
+                            </div>
+                            <div class="switch" onclick="toggleSwitch(this)"></div>
+                        </div>
+                        <div class="settings-row">
+                            <div>
+                                <strong>Email Notifications</strong>
+                                <p style="color: #666; font-size: 12px;">Receive notifications via email</p>
+                            </div>
+                            <div class="switch on" onclick="toggleSwitch(this)"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Account</h3>
+                        <button class="btn" onclick="logout()" style="background-color: #ff4444; border-color: #ff4444;">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Pages -->
+    <div class="page" id="login-page">
+        <div class="auth-container">
+            <h1 class="auth-title">Welcome Back</h1>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <input type="text" id="login-username" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+            </form>
+            <div class="auth-switch">
+                Don't have an account? <a onclick="showPage('register')">Sign up</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="register-page">
+        <div class="auth-container">
+            <h1 class="auth-title">Join SocialNet</h1>
+            <form onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label for="reg-username">Username</label>
+                    <input type="text" id="reg-username" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-email">Email</label>
+                    <input type="email" id="reg-email" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-password">Password</label>
+                    <input type="password" id="reg-password" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-name">Display Name</label>
+                    <input type="text" id="reg-name" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+            </form>
+            <div class="auth-switch">
+                Already have an account? <a onclick="showPage('login')">Login</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Global state
+        let currentUser = null;
+        let currentFeed = 'home';
+        let posts = [];
+        let users = [];
+        let follows = {};
+
+        const STORAGE_KEYS = {
+            USERS: 'sn_users',
+            POSTS: 'sn_posts',
+            FOLLOWS: 'sn_follows',
+            CURRENT: 'currentUser'
+        };
+
+        // Sample data (used only if no storage present)
+        const sampleUsers = [
+            { username: 'alice_dev', email: 'alice@example.com', name: 'Alice Developer', bio: 'Full-stack developer who loves coffee and code', followers: 245, following: 89 },
+            { username: 'bob_designer', email: 'bob@example.com', name: 'Bob Designer', bio: 'UI/UX designer making the web beautiful', followers: 167, following: 134 },
+            { username: 'charlie_writer', email: 'charlie@example.com', name: 'Charlie Writer', bio: 'Tech writer and blogger', followers: 89, following: 67 },
+            { username: 'diana_data', email: 'diana@example.com', name: 'Diana Data', bio: 'Data scientist exploring insights', followers: 203, following: 98 },
+            // You can add the owner account here if desired:
+            { username: 'chersbobers', email: 'owner@example.com', name: 'Chersbobers', bio: 'Site owner', followers: 999, following: 0 }
+        ];
+
+        const samplePosts = [
+            {
+                id: 1,
+                username: 'alice_dev',
+                content: 'Just finished building a new React component library! It handles all the boring stuff so you can focus on the fun parts of coding 🚀',
+                timestamp: new Date(Date.now() - 300000).toISOString(),
+                likes: 24,
+                reposts: 7,
+                liked: false
+            },
+            {
+                id: 2,
+                username: 'bob_designer',
+                content: 'Design tip of the day: White space is not empty space. It\'s a design element that helps guide the user\'s eye and creates balance. Use it wisely! ✨',
+                timestamp: new Date(Date.now() - 240000).toISOString(),
+                likes: 18,
+                reposts: 5,
+                liked: false
+            },
+            {
+                id: 3,
+                username: 'charlie_writer',
+                content: 'Found this amazing tutorial on advanced CSS animations: https://youtube.com/watch?v=example123\n\nReally breaks down complex concepts into digestible pieces!',
+                timestamp: new Date(Date.now() - 180000).toISOString(),
+                likes: 31,
+                reposts: 12,
+                liked: false
+            }
+        ];
+
+        // Storage helpers
+        function saveUsers() {
+            localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+        }
+        function savePosts() {
+            localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(posts));
+        }
+        function saveFollows() {
+            localStorage.setItem(STORAGE_KEYS.FOLLOWS, JSON.stringify(follows));
+        }
+
+        function loadFromStorage() {
+            const u = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || 'null');
+            const p = JSON.parse(localStorage.getItem(STORAGE_KEYS.POSTS) || 'null');
+            const f = JSON.parse(localStorage.getItem(STORAGE_KEYS.FOLLOWS) || 'null');
+
+            users = u && Array.isArray(u) ? u : [...sampleUsers];
+            posts = p && Array.isArray(p) ? p : [...samplePosts];
+            follows = f && typeof f === 'object' ? f : {};
+
+            // Ensure timestamps are Date objects (or ISO strings converted when used)
+            posts = posts.map(post => ({ ...post, timestamp: typeof post.timestamp === 'string' ? new Date(post.timestamp) : new Date(post.timestamp) }));
+        }
+
+        // Initialize app
+        function init() {
+            loadFromStorage();
+
+            const savedUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT) || 'null');
+            if (savedUser) {
+                currentUser = savedUser;
+                showLoggedInState();
+                showPage('home');
+            } else {
+                showPage('login');
+            }
+
+            updateCharCount();
+            if (currentUser) loadUserSuggestions();
+        }
+
+        // Page navigation
+        function showLoggedInState() {
+            const nav = document.getElementById('main-nav');
+            nav.innerHTML = `
+                <a href="#" class="nav-link" data-page="home" onclick="showPage('home')">Home</a>
+                <a href="#" class="nav-link" data-page="profile" onclick="showPage('profile')">Profile</a>
+                <a href="#" class="nav-link" data-page="discover" onclick="showPage('discover')">Discover</a>
+                <a href="#" class="nav-link" data-page="messages" onclick="showPage('messages')">Messages</a>
+                <a href="#" class="nav-link" data-page="settings" onclick="showPage('settings')">Settings</a>
+                <span class="nav-link" style="cursor:default">@${currentUser.username}</span>
+                <a href="#" class="nav-link" onclick="logout()">Logout</a>
+            `;
+        }
+
+        function updateNavigation(activePage) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            // match by data-page attribute
+            const active = document.querySelector(`.nav-link[data-page="${activePage}"]`);
+            if (active) active.classList.add('active');
+        }
+
+        // Proper showPage definition (fixed bug)
+        function showPage(pageId) {
+            // If trying to open restricted page while not logged in, redirect to login
+            const pagesRequiringAuth = ['home', 'profile', 'discover', 'messages', 'settings'];
+            if (pagesRequiringAuth.includes(pageId) && !currentUser) {
+                pageId = 'login';
+            }
+
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+
+            // Show selected page
+            const pageEl = document.getElementById(pageId + '-page');
+            if (pageEl) pageEl.classList.add('active');
+
+            // Load page-specific data
+            switch (pageId) {
+                case 'home':
+                    loadHomeFeed();
+                    break;
+                case 'profile':
+                    loadProfile();
+                    break;
+                case 'discover':
+                    loadDiscoverUsers();
+                    break;
+                case 'messages':
+                    // messages placeholder
+                    break;
+                case 'settings':
+                    loadSettings();
+                    break;
+            }
+
+            updateNavigation(pageId);
+        }
+
+        // Feed management
+        function showFeed(feedType) {
+            currentFeed = feedType;
+
+            // Update feed header
+            let title = '';
+            let subtitle = '';
+
+            switch(feedType) {
+                case 'home':
+                    title = 'Home';
+                    subtitle = 'Latest posts from people you follow';
+                    break;
+                case 'local':
+                    title = 'Local Timeline';
+                    subtitle = 'Posts from everyone on this instance';
+                    break;
+                case 'trending':
+                    title = 'Trending';
+                    subtitle = 'Popular posts and topics';
+                    break;
+            }
+
+            const titleEl = document.getElementById('current-feed-title');
+            const subtitleEl = document.getElementById('current-feed-subtitle');
+            if (titleEl) titleEl.textContent = title;
+            if (subtitleEl) subtitleEl.textContent = subtitle;
+
+            // Update sidebar buttons safely
+            ['home','local','trending'].forEach(t => {
+                const btn = document.getElementById(t + '-feed-btn');
+                if (btn) btn.classList.toggle('active', t === feedType);
+            });
+
+            loadHomeFeed();
+        }
+
+        function loadHomeFeed() {
+            let displayPosts = [...posts];
+
+            if (currentFeed === 'home' && currentUser && follows[currentUser.username]) {
+                const followedUsers = follows[currentUser.username];
+                displayPosts = posts.filter(post =>
+                    followedUsers.includes(post.username) || post.username === currentUser.username
+                );
+            }
+
+            displayPosts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            const postsContainer = document.getElementById('posts-list');
+            if (!postsContainer) return;
+            postsContainer.innerHTML = '';
+
+            displayPosts.forEach(post => {
+                const postElement = createPostElement(post);
+                postsContainer.appendChild(postElement);
+            });
+        }
+
+        function createPostElement(post) {
+            const postDiv = document.createElement('div');
+            postDiv.className = 'post';
+
+            const user = users.find(u => u.username === post.username);
+            const timestamp = (post.timestamp instanceof Date) ? post.timestamp.toLocaleString() : new Date(post.timestamp).toLocaleString();
+            let content = post.content || '';
+
+            // Convert YouTube links
+            content = content.replace(/(https?:\/\/(?:www\.)?youtube\.com\/watch\?v=[\w-]+)/g,
+                '<a href="$1" target="_blank" class="youtube-link">[YouTube Video]</a>');
+
+            const ownerBadge = (post.username === 'chersbobers') ? '<span class="owner-badge" title="Owner">OWNER</span>' : '';
+
+            postDiv.innerHTML = `
+                <div class="post-header">
+                    <span class="username" onclick="showUserProfile('${post.username}')">${user ? user.name : post.username} ${ownerBadge}</span>
+                    <span class="handle">@${post.username}</span>
+                    <span class="timestamp">${timestamp}</span>
+                </div>
+                <div class="post-content">${content}</div>
+                <div class="post-actions">
+                    <span class="post-action ${post.liked ? 'liked' : ''}" onclick="toggleLike(${post.id})">❤️ ${post.likes}</span>
+                    <span class="post-action" onclick="repost(${post.id})">🔄 ${post.reposts}</span>
+                    <span class="post-action">💬 Reply</span>
+                    <span class="post-action">📤 Share</span>
+                </div>
+            `;
+
+            return postDiv;
+        }
+        
+        // Post creation
+        function updateCharCount() {
+            const textarea = document.getElementById('post-textarea');
+            const count = document.getElementById('char-count');
+            const button = document.getElementById('post-button');
+
+            if (!textarea || !count || !button) return;
+
+            const length = textarea.value.length;
+            count.textContent = `${length}/500`;
+
+            if (length > 500) {
+                count.style.color = '#ff4444';
+                button.disabled = true;
+            } else {
+                count.style.color = '#666';
+                button.disabled = false;
+            }
+        }
+
+        function createPost() {
+            if (!currentUser) {
+                showNotification('You must be logged in to post.');
+                return;
+            }
+
+            const textarea = document.getElementById('post-textarea');
+            if (!textarea) return;
+            const content = textarea.value.trim();
+
+            if (!content) return;
+
+            const newPost = {
+                id: Date.now(),
+                username: currentUser.username,
+                content: content,
+                timestamp: new Date().toISOString(),
+                likes: 0,
+                reposts: 0,
+                liked: false
+            };
+
+            posts.unshift(newPost);
+            savePosts();
+            textarea.value = '';
+            updateCharCount();
+            loadHomeFeed();
+            showNotification('Post created!');
+        }
+
+        // Post interactions
+        function toggleLike(postId) {
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+
+            if (post.liked) {
+                post.likes = Math.max(0, post.likes - 1);
+                post.liked = false;
+            } else {
+                post.likes++;
+                post.liked = true;
+            }
+
+            savePosts();
+            loadHomeFeed();
+        }
+
+        function repost(postId) {
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+
+            post.reposts++;
+            savePosts();
+            showNotification('Post shared!');
+            loadHomeFeed();
+        }
+
+        // Profile management
+        function loadProfile() {
+            if (!currentUser) return;
+
+            const avatar = document.getElementById('profile-avatar');
+            const nameEl = document.getElementById('profile-name');
+            const handle = document.getElementById('profile-handle');
+            const bio = document.getElementById('profile-bio');
+
+            if (avatar) avatar.textContent = (currentUser.name || '?').charAt(0).toUpperCase();
+            if (nameEl) nameEl.innerHTML = `${currentUser.name} ${currentUser.username === 'chersbobers' ? '<span class="owner-badge">OWNER</span>' : ''}`;
+            if (handle) handle.textContent = '@' + currentUser.username;
+            if (bio) bio.textContent = currentUser.bio || 'Welcome to my profile!';
+
+            const userPosts = posts.filter(p => p.username === currentUser.username);
+            const postsCount = document.getElementById('profile-posts');
+            const followingCount = document.getElementById('profile-following');
+            const followersCount = document.getElementById('profile-followers');
+
+            if (postsCount) postsCount.textContent = userPosts.length;
+            if (followingCount) followingCount.textContent = follows[currentUser.username] ? follows[currentUser.username].length : 0;
+            if (followersCount) followersCount.textContent = currentUser.followers || 0;
+
+            // Load user's posts
+            const postsContainer = document.getElementById('profile-posts-list');
+            if (postsContainer) {
+                postsContainer.innerHTML = '';
+                userPosts.forEach(post => postsContainer.appendChild(createPostElement(post)));
+            }
+        }
+
+        function showUserProfile(username) {
+            const user = users.find(u => u.username === username);
+            if (!user) return;
+            showNotification(`Viewing ${user.name}'s profile - Feature coming soon!`);
+        }
+
+        // Discover page
+        function loadDiscoverUsers() {
+            if (!currentUser) {
+                document.getElementById('discover-users-list').innerHTML = '<div style="padding:20px;color:#666;">Log in to discover users.</div>';
+                return;
+            }
+
+            const container = document.getElementById('discover-users-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const currentFollowing = follows[currentUser?.username] || [];
+            const suggestedUsers = users.filter(user =>
+                user.username !== currentUser?.username &&
+                !currentFollowing.includes(user.username)
+            );
+
+            suggestedUsers.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user-item';
+
+                const ownerBadge = user.username === 'chersbobers' ? '<span class="owner-badge">OWNER</span>' : '';
+
+                userDiv.innerHTML = `
+                    <div class="user-info">
+                        <div class="user-avatar">${user.name.charAt(0).toUpperCase()}</div>
+                        <div class="user-details">
+                            <h4>${user.name} ${ownerBadge}</h4>
+                            <p>@${user.username}</p>
+                            <p style="color: #ccc; margin-top: 5px;">${user.bio}</p>
+                        </div>
+                    </div>
+                    <button class="btn follow-btn" onclick="toggleFollow('${user.username}')" id="follow-${user.username}">
+                        Follow
+                    </button>
+                `;
+
+                container.appendChild(userDiv);
+            });
+        }
+
+        function toggleFollow(username) {
+            if (!currentUser) {
+                showNotification('Log in to follow users.');
+                return;
+            }
+
+            if (!follows[currentUser.username]) {
+                follows[currentUser.username] = [];
+            }
+
+            const following = follows[currentUser.username];
+            const isFollowing = following.includes(username);
+
+            if (isFollowing) {
+                follows[currentUser.username] = following.filter(u => u !== username);
+                showNotification(`Unfollowed @${username}`);
+            } else {
+                follows[currentUser.username].push(username);
+                showNotification(`Now following @${username}`);
+            }
+
+            saveFollows();
+
+            const button = document.getElementById(`follow-${username}`);
+            if (button) button.textContent = isFollowing ? 'Follow' : 'Unfollow';
+
+            loadUserSuggestions();
+            loadDiscoverUsers();
+        }
+
+        function loadUserSuggestions() {
+            const container = document.getElementById('user-suggestions');
+            if (!container || !currentUser) return;
+
+            const currentFollowing = follows[currentUser?.username] || [];
+            const suggestions = users.filter(user =>
+                user.username !== currentUser?.username &&
+                !currentFollowing.includes(user.username)
+            ).slice(0, 3);
+
+            container.innerHTML = '';
+
+            suggestions.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user-item';
+
+                const ownerBadge = user.username === 'chersbobers' ? '<span class="owner-badge">OWNER</span>' : '';
+
+                userDiv.innerHTML = `
+                    <div class="user-info">
+                        <div class="user-avatar">${user.name.charAt(0).toUpperCase()}</div>
+                        <div class="user-details">
+                            <h4>${user.name} ${ownerBadge}</h4>
+                            <p>@${user.username}</p>
+                        </div>
+                    </div>
+                    <button class="btn follow-btn" onclick="toggleFollow('${user.username}')" style="font-size: 10px; padding: 3px 8px;">Follow</button>
+                `;
+
+                container.appendChild(userDiv);
+            });
+        }
+
+        // Settings
+        function loadSettings() {
+            if (!currentUser) return;
+
+            document.getElementById('settings-name').value = currentUser.name || '';
+            document.getElementById('settings-bio').value = currentUser.bio || '';
+        }
+
+        function saveProfile() {
+            if (!currentUser) return;
+
+            const name = document.getElementById('settings-name').value.trim();
+            const bio = document.getElementById('settings-bio').value.trim();
+
+            if (name) {
+                currentUser.name = name;
+                currentUser.bio = bio;
+
+                const userIndex = users.findIndex(u => u.username === currentUser.username);
+                if (userIndex !== -1) {
+                    users[userIndex] = {...currentUser};
+                } else {
+                    users.push({...currentUser});
+                }
+
+                saveUsers();
+                localStorage.setItem(STORAGE_KEYS.CURRENT, JSON.stringify(currentUser));
+                showNotification('Profile updated!');
+                if (document.getElementById('profile-page').classList.contains('active')) loadProfile();
+            }
+        }
+
+        function toggleSwitch(element) {
+            element.classList.toggle('on');
+        }
+
+        // Utility functions
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Initialize app when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            init();
+            
+            // Load user suggestions if logged in
+            if (currentUser) {
+                loadUserSuggestions();
+            }
+        });
+        
+        // Handle keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            // Ctrl/Cmd + Enter to post
+            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                const textarea = document.getElementById('post-textarea');
+                if (textarea && document.activeElement === textarea) {
+                    createPost();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
