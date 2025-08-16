@@ -869,6 +869,7 @@
                 showLoggedInState();
                 showPage('home');
             } else {
+                showLoggedOutState();
                 showPage('login');
             }
 
@@ -890,6 +891,14 @@
             `;
         }
 
+        function showLoggedOutState() {
+            const nav = document.getElementById('main-nav');
+            nav.innerHTML = `
+                <a href="#" class="nav-link" data-page="login" onclick="showPage('login')">Login</a>
+                <a href="#" class="nav-link" data-page="register" onclick="showPage('register')">Register</a>
+            `;
+        }
+        
         function updateNavigation(activePage) {
             document.querySelectorAll('.nav-link').forEach(link => {
                 link.classList.remove('active');
@@ -1307,6 +1316,7 @@
                 showLoggedInState();
                 loadUserSuggestions();
                 showPage('home');
+                updateNavigation('home');
                 showNotification('Welcome back, ' + (user.name || user.username) + '!');
             } else {
                 showNotification('User not found. Try registering first.');
@@ -1351,6 +1361,7 @@
             showLoggedInState();
             loadUserSuggestions();
             showPage('home');
+            updateNavigation('home');
             showNotification('Welcome to SocialNet, ' + name + '!');
 
             // clear form
@@ -1363,10 +1374,7 @@
         function logout() {
             currentUser = null;
             localStorage.removeItem(STORAGE_KEYS.CURRENT);
-            const nav = document.getElementById('main-nav');
-            if (nav) {
-                nav.innerHTML = '<a class="nav-link" onclick="showPage(\\'login\\')">Login</a> <a class="nav-link" onclick="showPage(\\'register\\')">Register</a>';
-            }
+            showLoggedOutState();
             showPage('login');
             updateNavigation('login');
         }
