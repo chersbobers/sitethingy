@@ -1198,47 +1198,8 @@
             loadHomeFeed();
         }
 
-        // Profile management
-        function loadProfile() {
-            // Choose whose profile to show: viewedUser (if set) else currentUser
-            const subject = viewedUser || currentUser;
-            if (!subject) return;
-
-            const avatar = document.getElementById('profile-avatar');
-            const nameEl = document.getElementById('profile-name');
-            const handle = document.getElementById('profile-handle');
-            const bio = document.getElementById('profile-bio');
-
-            if (avatar) avatar.textContent = (subject.name || '?').charAt(0).toUpperCase();
-            if (nameEl) nameEl.innerHTML = `${subject.name} ${subject.username === 'chersbobers' ? '<span class="owner-badge">OWNER</span>' : ''}`;
-            if (handle) handle.textContent = '@' + subject.username;
-            if (bio) bio.textContent = subject.bio || 'Welcome to this profile!';
-
-            const userPosts = posts.filter(p => p.username === subject.username);
-            const postsCount = document.getElementById('profile-posts');
-            const followingCount = document.getElementById('profile-following');
-            const followersCount = document.getElementById('profile-followers');
-
-            // compute follower count from follows object to keep consistent
-            const followerCount = Object.keys(follows).reduce((acc, followerUser) => {
-                const arr = follows[followerUser] || [];
-                return acc + (arr.includes(subject.username) ? 1 : 0);
-            }, 0);
-
-            if (postsCount) postsCount.textContent = userPosts.length;
-            if (followingCount) followingCount.textContent = (follows[subject.username] || []).length;
-            if (followersCount) followersCount.textContent = followerCount;
-
-            // Load user's posts
-            const postsContainer = document.getElementById('profile-posts-list');
-            if (postsContainer) {
-                postsContainer.innerHTML = '';
-                userPosts.forEach(post => postsContainer.appendChild(createPostElement(post)));
-            }
-
-            renderFollowersPills(subject.username);
-            renderProfileAction(subject.username);
-        }
+        // Profile management (single implementation exists later in file)
+        // Duplicate/old definition removed to prevent conflicts
 
         function showUserProfile(username, pushHistory = true) {
             const user = users.find(u => u.username === username);
@@ -1272,48 +1233,6 @@
             // default: go home (or login if not authenticated)
             if (currentUser) showPage('home'); else showPage('login');
         });
-
-        // Update loadProfile to accept viewedUser OR currentUser
-        function loadProfile() {
-            // Choose whose profile to show: viewedUser (if set) else currentUser
-            const subject = viewedUser || currentUser;
-            if (!subject) return;
-
-            const avatar = document.getElementById('profile-avatar');
-            const nameEl = document.getElementById('profile-name');
-            const handle = document.getElementById('profile-handle');
-            const bio = document.getElementById('profile-bio');
-
-            if (avatar) avatar.textContent = (subject.name || '?').charAt(0).toUpperCase();
-            if (nameEl) nameEl.innerHTML = `${subject.name} ${subject.username === 'chersbobers' ? '<span class="owner-badge">OWNER</span>' : ''}`;
-            if (handle) handle.textContent = '@' + subject.username;
-            if (bio) bio.textContent = subject.bio || 'Welcome to this profile!';
-
-            const userPosts = posts.filter(p => p.username === subject.username);
-            const postsCount = document.getElementById('profile-posts');
-            const followingCount = document.getElementById('profile-following');
-            const followersCount = document.getElementById('profile-followers');
-
-            // compute follower count from follows object to keep consistent
-            const followerCount = Object.keys(follows).reduce((acc, followerUser) => {
-                const arr = follows[followerUser] || [];
-                return acc + (arr.includes(subject.username) ? 1 : 0);
-            }, 0);
-
-            if (postsCount) postsCount.textContent = userPosts.length;
-            if (followingCount) followingCount.textContent = (follows[subject.username] || []).length;
-            if (followersCount) followersCount.textContent = followerCount;
-
-            // Load user's posts
-            const postsContainer = document.getElementById('profile-posts-list');
-            if (postsContainer) {
-                postsContainer.innerHTML = '';
-                userPosts.forEach(post => postsContainer.appendChild(createPostElement(post)));
-            }
-
-            renderFollowersPills(subject.username);
-            renderProfileAction(subject.username);
-        }
 
         // Render follower "pills" in profile
         function renderFollowersPills(username) {
@@ -1410,12 +1329,12 @@
                 showNotification('Log in to follow users.');
                 return;
             }
-
+    
             if (!follows[currentUser.username]) follows[currentUser.username] = [];
-
+    
             const following = follows[currentUser.username];
             const isFollowing = following.includes(username);
-
+    
             // update follows map
             if (isFollowing) {
                 follows[currentUser.username] = following.filter(u => u !== username);
@@ -1424,23 +1343,23 @@
                 follows[currentUser.username].push(username);
                 showNotification(`Now following @${username}`);
             }
-
+    
             // Update follower count on target user object (for display convenience)
             const target = users.find(u => u.username === username);
             if (target) {
                 // compute follower count from follows map to keep accurate
                 target.followers = Object.keys(follows).reduce((acc, fuser) => {
                     const arr = follows[fuser] || [];
-                    return acc + (arr.includes(botUsername) ? 1 : 0);
+                    return acc + (arr.includes(username) ? 1 : 0);
                 }, 0);
             }
-
+    
             saveFollows();
             saveUsers();
-
+    
             const button = document.getElementById(`follow-${username}`);
             if (button) button.textContent = isFollowing ? 'Follow' : 'Unfollow';
-
+    
             loadUserSuggestions();
             loadDiscoverUsers();
         }
