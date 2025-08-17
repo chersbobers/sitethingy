@@ -563,7 +563,7 @@
                     
                     <h3>Quick Actions</h3>
                     <div>
-                        <div class="nav-link" onclick="showPage('profile')">👤 My Profile</div>
+                        <div class="nav-link" onclick="openMyProfile()">👤 My Profile</div>
                         <div class="nav-link" onclick="showPage('discover')">🔍 Discover</div>
                         <div class="nav-link" onclick="showPage('messages')">💬 Messages</div>
                     </div>
@@ -576,12 +576,17 @@
                     </div>
                     
                     <div class="post-composer" id="post-composer">
-                        <textarea class="composer-textarea" id="post-textarea" placeholder="What's happening?" maxlength="500" oninput="updateCharCount()"></textarea>
-                        <div class="composer-footer">
-                            <div class="char-count" id="char-count">0/500</div>
-                            <button class="btn btn-primary" onclick="createPost()" id="post-button">Post</button>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <select id="post-community-select" class="form-input" style="width:220px; padding:8px; background:#000; color:#ccc; border:1px solid #333;">
+                                <option value="">— Post to timeline —</option>
+                            </select>
+                            <textarea class="composer-textarea" id="post-textarea" placeholder="What's happening?" maxlength="500" oninput="updateCharCount()" style="flex:1;"></textarea>
                         </div>
-                    </div>
+                         <div class="composer-footer">
+                             <div class="char-count" id="char-count">0/500</div>
+                             <button class="btn btn-primary" onclick="createPost()" id="post-button">Post</button>
+                         </div>
+                     </div>
                     
                     <div class="posts-list" id="posts-list">
                         <!-- Posts will be loaded here -->
@@ -832,7 +837,9 @@
             POSTS: 'sn_posts',
             FOLLOWS: 'sn_follows',
             CURRENT: 'currentUser',
-            BOT: 'sn_bot'
+            BOT: 'sn_bot',
+            MESSAGES: 'sn_messages',
+            COMMUNITIES: 'sn_communities'
         };
         
         // Sample data (used only if no storage present)
@@ -933,6 +940,8 @@
             loadFromStorage();
             loadBotSetting();
             ensureBotExists(botUsername);
+            loadMessagesFromStorage();
+            loadCommunities();
 
             const savedUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT) || 'null');
             if (savedUser) {
@@ -956,6 +965,9 @@
 
             updateCharCount();
             if (currentUser) loadUserSuggestions();
+
+            // populate communities dropdown in composer
+            populateComposerCommunities();
         }
 
         // Page navigation
@@ -963,9 +975,10 @@
             const nav = document.getElementById('main-nav');
             nav.innerHTML = `
                 <a href="#" class="nav-link" data-page="home" onclick="showPage('home')">Home</a>
-                <a href="#" class="nav-link" data-page="profile" onclick="showPage('profile')">Profile</a>
+                <a href="#" class="nav-link" data-page="profile" onclick="openMyProfile()">Profile</a>
                 <a href="#" class="nav-link" data-page="discover" onclick="showPage('discover')">Discover</a>
                 <a href="#" class="nav-link" data-page="messages" onclick="showPage('messages')">Messages</a>
+                <a href="#" class="nav-link" data-page="communities" onclick="showPage('communities')">Communities</a>
                 <a href="#" class="nav-link" data-page="settings" onclick="showPage('settings')">Settings</a>
                 <span class="nav-link" style="cursor:default">@${currentUser.username}</span>
                 <a href="#" class="nav-link" onclick="logout()">Logout</a>
@@ -994,7 +1007,7 @@
         // Proper showPage definition (fixed bug)
         function showPage(pageId) {
             // If trying to open restricted page while not logged in, redirect to login
-            const pagesRequiringAuth = ['home', 'profile', 'discover', 'messages', 'settings'];
+            const pagesRequiringAuth = ['home', 'profile', 'discover', 'messages', 'settings', 'communities'];
             if (pagesRequiringAuth.includes(pageId) && !currentUser) {
                 pageId = 'login';
             }
@@ -1014,13 +1027,18 @@
                     loadHomeFeed();
                     break;
                 case 'profile':
+                    // if no explicit viewedUser set, show current user's profile
+                    if (!viewedUser) viewedUser = currentUser;
                     loadProfile();
                     break;
                 case 'discover':
                     loadDiscoverUsers();
                     break;
                 case 'messages':
-                    // messages placeholder
+                    loadConversations();
+                    break;
+                case 'communities':
+                    renderCommunities();
                     break;
                 case 'settings':
                     loadSettings();
@@ -1153,6 +1171,9 @@
 
             if (!content) return;
 
+            const communitySelect = document.getElementById('post-community-select');
+            const community = communitySelect ? (communitySelect.value || null) : null;
+
             const newPost = {
                 id: Date.now(),
                 username: currentUser.username,
@@ -1160,7 +1181,8 @@
                 timestamp: new Date().toISOString(),
                 likes: 0,
                 reposts: 0,
-                liked: false
+                liked: false,
+                community: community
             };
 
             posts.unshift(newPost);
@@ -1168,6 +1190,7 @@
             textarea.value = '';
             updateCharCount();
             loadHomeFeed();
+            populateComposerCommunities();
             showNotification('Post created!');
         }
 
